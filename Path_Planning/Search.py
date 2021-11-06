@@ -168,8 +168,10 @@ coordY = 0
 #startY = randrange(gridY)
 startX = 1
 startY = 1
-goalX = randrange(gridX)
-goalY = randrange(gridY)
+#goalX = randrange(gridX)
+#goalY = randrange(gridY)
+goalX = 4
+goalY = 5
 print("Goal: "  + str(goalX) + ", "+ str(goalY))
 
 coordinates = []
@@ -177,127 +179,169 @@ explored = []
 exploredNodes = []
 nodes = []
 path = []
-obstacles = []
+obstacles = [(3,3), (3,4), (3, 5), (4, 3)]
 
 #coordinates.append((startX, startY))
 #coordinates.append((goalX, goalY))
 
-def calculateG(x, y):
-	return int(math.sqrt(abs((startX ** 2 - x ** 2) + (startY ** 2 - y ** 2))))
-
 def calculateH(x, y):
-	return int(math.sqrt(abs((goalX ** 2 - x ** 2) + (goalY ** 2 - y ** 2))))
+	h = 0
+	while x != goalX or y != goalY:
+		if x == goalX and y < goalY:
+			y = y + 1
+			h = h + 1
+		if x == goalX and y > goalY:
+			y = y - 1
+			h = h + 1
+		if x > goalX and y == goalY:
+			x = x - 1
+			h = h + 1
+		if x < goalX and y == goalY:
+			x = x + 1
+			h = h + 1
+		if x < goalX and y < goalY:
+			x = x + 1
+			y = y + 1
+			h = h + 1.4
+		if x > goalX and y > goalY:
+			x = x - 1
+			y = y - 1
+			h = h + 1.4
+		if x > goalX and y < goalY:
+			x = x - 1
+			y = y + 1
+			h = h + 1.4
+		if x < goalX and y > goalY:
+			x = x + 1
+			y = y - 1
+			h = h + 1.4
+	return h
 
-start = node(counter, startX, startY, calculateG(startX, startY), calculateH(startX, startY), counter)
+start = node(counter, startX, startY, 0, calculateH(startX, startY), counter)
 nodes.append(start)
-coordinates.append((startX, startY, calculateG(startX, startY) + calculateH(startX, startY)))
+coordinates.append((startX, startY, calculateH(startX, startY)))
 counter += 1
 
-goal = node(counter, goalX, goalY, calculateG(goalX, goalY), calculateH(startX, startY),counter)
-
-nodes.append(start)
-coordinates.append((startX, startY, calculateG(startX, startY) + calculateH(startX, startY)))
+goal = node(counter, goalX, goalY, 0, calculateH(startX, startY),counter)
 counter += 1
 
 def checkNeighbors(parentNode):
 	global counter
-	if (parentNode.x + 1, parentNode.y, calculateG(parentNode.x + 1, parentNode.y) + calculateH(parentNode.x + 1, parentNode.y)) not in coordinates and (parentNode.x + 1, parentNode.y, calculateG(parentNode.x + 1, parentNode.y) + calculateH(parentNode.x + 1, parentNode.y)) not in explored and parentNode.x + 1 >= 0 and parentNode.x + 1 <= gridX and parentNode.y >= 0 and parentNode.y <= gridY:
-		nodes.append(node(counter, parentNode.x + 1, parentNode.y, calculateG(parentNode.x + 1, parentNode.y), calculateH(parentNode.x + 1, parentNode.y), parentNode.number))
-		coordinates.append((parentNode.x + 1, parentNode.y, calculateG(parentNode.x + 1, parentNode.y) + calculateH(parentNode.x + 1, parentNode.y)))
+	#print("parentNode G: " + str(parentNode.g))
+	'''
+	if (parentNode.x + 1, parentNode.y) in explored:
+		for node in exploredNodes:
+			if node.x == parentNode.x + 1 and node.y == parentNode.y:
+				if node.g > parentNode.g + 1:
+					node.g = parentNode.g
+					node.parent = parentNode.counter
+			break
+	'''
+
+	if (parentNode.x + 1, parentNode.y, parentNode.g + 1 + calculateH(parentNode.x + 1, parentNode.y)) not in coordinates and (parentNode.x + 1, parentNode.y) not in explored and (parentNode.x + 1, parentNode.y) not in obstacles and parentNode.x + 1 > 0 and parentNode.x + 1 <= gridX and parentNode.y > 0 and parentNode.y <= gridY:
+		nodes.append(node(counter, parentNode.x + 1, parentNode.y, parentNode.g + 1, calculateH(parentNode.x + 1, parentNode.y), parentNode.number))
+		coordinates.append((parentNode.x + 1, parentNode.y, parentNode.g + 1 + calculateH(parentNode.x + 1, parentNode.y)))
 		counter += 1
-		print("adding " + str(parentNode.x + 1) + ", " + str(parentNode.y))
+		#print("adding " + str(nodes[len(nodes) - 1].x) + ", " + str(nodes[len(nodes) - 1].y) + " g: " + str(nodes[len(nodes) - 1].g) + " h: " + str(nodes[len(nodes) - 1].h) + " f: " + str(nodes[len(nodes) - 1].f))
 		nodes.sort(key = lambda x: x.f, reverse = True)
 		coordinates.sort(key = lambda x: x[2], reverse = True)
 
-	if (parentNode.x + 1, parentNode.y + 1, calculateG(parentNode.x + 1, parentNode.y + 1) + calculateH(parentNode.x + 1, parentNode.y + 1)) not in coordinates and (parentNode.x + 1, parentNode.y + 1, calculateG(parentNode.x + 1, parentNode.y + 1) + calculateH(parentNode.x + 1, parentNode.y + 1)) not in explored and parentNode.x + 1 >= 0 and parentNode.x + 1 <= gridX and parentNode.y + 1 >= 0 and parentNode.y + 1 <= gridY:
-		nodes.append(node(counter, parentNode.x + 1, parentNode.y + 1, calculateG(parentNode.x + 1, parentNode.y + 1), calculateH(parentNode.x + 1, parentNode.y + 1), parentNode.number))
-		coordinates.append((parentNode.x + 1, parentNode.y + 1, calculateG(parentNode.x + 1, parentNode.y + 1) + calculateH(parentNode.x + 1, parentNode.y + 1)))
+	if (parentNode.x + 1, parentNode.y + 1, parentNode.g + 1.4 + calculateH(parentNode.x + 1, parentNode.y + 1)) not in coordinates and (parentNode.x + 1, parentNode.y + 1) not in explored and (parentNode.x + 1, parentNode.y + 1) not in obstacles and parentNode.x + 1 > 0 and parentNode.x + 1 <= gridX and parentNode.y + 1 > 0 and parentNode.y + 1 <= gridY:
+		nodes.append(node(counter, parentNode.x + 1, parentNode.y + 1, parentNode.g + 1.4, calculateH(parentNode.x + 1, parentNode.y + 1), parentNode.number))
+		coordinates.append((parentNode.x + 1, parentNode.y + 1, 1.4 + calculateH(parentNode.x + 1, parentNode.y + 1)))
 		counter += 1
-		print("adding " + str(parentNode.x + 1) + ", " + str(parentNode.y + 1))
+		#print("adding " + str(nodes[len(nodes) - 1].x) + ", " + str(nodes[len(nodes) - 1].y) + " g: " + str(nodes[len(nodes) - 1].g) + " h: " + str(nodes[len(nodes) - 1].h) + " f: " + str(nodes[len(nodes) - 1].f))		
 		nodes.sort(key = lambda x: x.f, reverse = True)
 		coordinates.sort(key = lambda x: x[2], reverse = True)
 
-	if (parentNode.x, parentNode.y + 1, calculateG(parentNode.x, parentNode.y + 1) + calculateH(parentNode.x, parentNode.y + 1)) not in coordinates and (parentNode.x, parentNode.y + 1, calculateG(parentNode.x, parentNode.y + 1) + calculateH(parentNode.x, parentNode.y + 1)) not in explored and parentNode.x >= 0 and parentNode.x <= gridX and parentNode.y + 1 >= 0 and parentNode.y + 1 <= gridY:
-		nodes.append(node(counter, parentNode.x, parentNode.y + 1, calculateG(parentNode.x, parentNode.y + 1), calculateH(parentNode.x, parentNode.y + 1), parentNode.number))
-		coordinates.append((parentNode.x, parentNode.y + 1, calculateG(parentNode.x, parentNode.y + 1) + calculateH(parentNode.x, parentNode.y + 1)))
+	if (parentNode.x, parentNode.y + 1, parentNode.g + 1 + calculateH(parentNode.x, parentNode.y + 1)) not in coordinates and (parentNode.x, parentNode.y + 1) not in explored and (parentNode.x, parentNode.y + 1) not in obstacles and parentNode.x > 0 and parentNode.x <= gridX and parentNode.y + 1 > 0 and parentNode.y + 1 <= gridY:
+		nodes.append(node(counter, parentNode.x, parentNode.y + 1, parentNode.g + 1, calculateH(parentNode.x, parentNode.y + 1), parentNode.number))
+		coordinates.append((parentNode.x, parentNode.y + 1, parentNode.g + 1 + calculateH(parentNode.x, parentNode.y + 1)))
 		counter += 1
-		print("adding " + str(parentNode.x) + ", " + str(parentNode.y + 1))
+		#print("adding " + str(nodes[len(nodes) - 1].x) + ", " + str(nodes[len(nodes) - 1].y) + " g: " + str(nodes[len(nodes) - 1].g) + " h: " + str(nodes[len(nodes) - 1].h) + " f: " + str(nodes[len(nodes) - 1].f))
 		nodes.sort(key = lambda x: x.f, reverse = True)
 		coordinates.sort(key = lambda x: x[2], reverse = True)
 
-	if (parentNode.x - 1, parentNode.y + 1, calculateG(parentNode.x - 1, parentNode.y + 1) + calculateH(parentNode.x - 1, parentNode.y + 1)) not in coordinates and (parentNode.x - 1, parentNode.y + 1, calculateG(parentNode.x - 1, parentNode.y + 1) + calculateH(parentNode.x - 1, parentNode.y + 1)) not in explored and parentNode.x - 1 >= 0 and parentNode.x - 1 <= gridX and parentNode.y + 1 >= 0 and parentNode.y + 1 <= gridY:
-		nodes.append(node(counter, parentNode.x - 1, parentNode.y + 1, calculateG(parentNode.x - 1, parentNode.y + 1), calculateH(parentNode.x - 1, parentNode.y + 1), parentNode.number))
-		coordinates.append((parentNode.x - 1, parentNode.y + 1, calculateG(parentNode.x - 1, parentNode.y + 1) + calculateH(parentNode.x - 1, parentNode.y + 1)))
+	if (parentNode.x - 1, parentNode.y + 1, parentNode.g + 1.4 + calculateH(parentNode.x - 1, parentNode.y + 1)) not in coordinates and (parentNode.x - 1, parentNode.y + 1) not in explored and (parentNode.x - 1, parentNode.y + 1) not in obstacles and parentNode.x - 1 > 0 and parentNode.x - 1 <= gridX and parentNode.y + 1 > 0 and parentNode.y + 1 <= gridY:
+		nodes.append(node(counter, parentNode.x - 1, parentNode.y + 1, parentNode.g + 1.4, calculateH(parentNode.x - 1, parentNode.y + 1), parentNode.number))
+		coordinates.append((parentNode.x - 1, parentNode.y + 1, parentNode.g + 1.4 + calculateH(parentNode.x - 1, parentNode.y + 1)))
 		counter += 1
-		print("adding " + str(parentNode.x - 1) + ", " + str(parentNode.y + 1))
+		#print("adding " + str(nodes[len(nodes) - 1].x) + ", " + str(nodes[len(nodes) - 1].y) + " g: " + str(nodes[len(nodes) - 1].g) + " h: " + str(nodes[len(nodes) - 1].h) + " f: " + str(nodes[len(nodes) - 1].f))
 		nodes.sort(key = lambda x: x.f, reverse = True)
 		coordinates.sort(key = lambda x: x[2], reverse = True)
 
-	if (parentNode.x - 1, parentNode.y, calculateG(parentNode.x - 1, parentNode.y) + calculateH(parentNode.x - 1, parentNode.y)) not in coordinates and (parentNode.x - 1, parentNode.y, calculateG(parentNode.x - 1, parentNode.y) + calculateH(parentNode.x - 1, parentNode.y)) not in explored and parentNode.x - 1 >= 0 and parentNode.x - 1 <= gridX and parentNode.y >= 0 and parentNode.y <= gridY:
-		nodes.append(node(counter, parentNode.x - 1, parentNode.y, calculateG(parentNode.x - 1, parentNode.y), calculateH(parentNode.x - 1, parentNode.y), parentNode.number))
-		coordinates.append((parentNode.x - 1, parentNode.y, calculateG(parentNode.x - 1, parentNode.y) + calculateH(parentNode.x - 1, parentNode.y)))
+	if (parentNode.x - 1, parentNode.y, parentNode.g + 1 + calculateH(parentNode.x - 1, parentNode.y)) not in coordinates and (parentNode.x - 1, parentNode.y) not in explored and (parentNode.x - 1, parentNode.y) not in obstacles and parentNode.x - 1 > 0 and parentNode.x - 1 <= gridX and parentNode.y > 0 and parentNode.y <= gridY:
+		nodes.append(node(counter, parentNode.x - 1, parentNode.y, parentNode.g + 1, calculateH(parentNode.x - 1, parentNode.y), parentNode.number))
+		coordinates.append((parentNode.x - 1, parentNode.y, parentNode.g + 1 + calculateH(parentNode.x - 1, parentNode.y)))
 		counter += 1
-		print("adding " + str(parentNode.x - 1) + ", " + str(parentNode.y))
+		#print("adding " + str(nodes[len(nodes) - 1].x) + ", " + str(nodes[len(nodes) - 1].y) + " g: " + str(nodes[len(nodes) - 1].g) + " h: " + str(nodes[len(nodes) - 1].h) + " f: " + str(nodes[len(nodes) - 1].f))
 		nodes.sort(key = lambda x: x.f, reverse = True)
 		coordinates.sort(key = lambda x: x[2], reverse = True)
 
-	if (parentNode.x - 1, parentNode.y - 1, calculateG(parentNode.x - 1, parentNode.y - 1) + calculateH(parentNode.x - 1, parentNode.y - 1)) not in coordinates and (parentNode.x - 1, parentNode.y - 1, calculateG(parentNode.x - 1, parentNode.y - 1) + calculateH(parentNode.x - 1, parentNode.y - 1)) not in explored and parentNode.x - 1 >= 0 and parentNode.x - 1 <= gridX and parentNode.y - 1 >= 0 and parentNode.y - 1 <= gridY:
-		nodes.append(node(counter, parentNode.x - 1, parentNode.y - 1, calculateG(parentNode.x - 1, parentNode.y - 1), calculateH(parentNode.x - 1, parentNode.y - 1), parentNode.number))
-		coordinates.append((parentNode.x - 1, parentNode.y - 1, calculateG(parentNode.x - 1, parentNode.y - 1) + calculateH(parentNode.x - 1, parentNode.y - 1)))
+	if (parentNode.x - 1, parentNode.y - 1, parentNode.g + 1.4 + calculateH(parentNode.x - 1, parentNode.y - 1)) not in coordinates and (parentNode.x - 1, parentNode.y - 1) not in explored and (parentNode.x - 1, parentNode.y - 1) not in obstacles and parentNode.x - 1 > 0 and parentNode.x - 1 <= gridX and parentNode.y - 1 > 0 and parentNode.y - 1 <= gridY:
+		nodes.append(node(counter, parentNode.x - 1, parentNode.y - 1, parentNode.g + 1.4, calculateH(parentNode.x - 1, parentNode.y - 1), parentNode.number))
+		coordinates.append((parentNode.x - 1, parentNode.y - 1, 1.4 + calculateH(parentNode.x - 1, parentNode.y - 1)))
 		counter += 1
-		print("adding " + str(parentNode.x - 1) + ", " + str(parentNode.y - 1))
+		#print("adding " + str(nodes[len(nodes) - 1].x) + ", " + str(nodes[len(nodes) - 1].y) + " g: " + str(nodes[len(nodes) - 1].g) + " h: " + str(nodes[len(nodes) - 1].h) + " f: " + str(nodes[len(nodes) - 1].f))
 		nodes.sort(key = lambda x: x.f, reverse = True)
 		coordinates.sort(key = lambda x: x[2], reverse = True)
 
-	if (parentNode.x, parentNode.y - 1, calculateG(parentNode.x, parentNode.y - 1) + calculateH(parentNode.x, parentNode.y - 1)) not in coordinates and (parentNode.x, parentNode.y - 1, calculateG(parentNode.x, parentNode.y - 1) + calculateH(parentNode.x, parentNode.y - 1)) not in explored  and parentNode.x >= 0 and parentNode.x <= gridX and parentNode.y - 1 >= 0 and parentNode.y - 1 <= gridY:
-		nodes.append(node(counter, parentNode.x, parentNode.y - 1, calculateG(parentNode.x, parentNode.y - 1), calculateH(parentNode.x, parentNode.y - 1), parentNode.number))
-		coordinates.append((parentNode.x, parentNode.y - 1, calculateG(parentNode.x, parentNode.y - 1) + calculateH(parentNode.x, parentNode.y - 1)))
+	if (parentNode.x, parentNode.y - 1, parentNode.g + 1 + calculateH(parentNode.x, parentNode.y - 1)) not in coordinates and (parentNode.x, parentNode.y - 1) not in explored and (parentNode.x, parentNode.y - 1) not in obstacles and parentNode.x > 0 and parentNode.x <= gridX and parentNode.y - 1 > 0 and parentNode.y - 1 <= gridY:
+		nodes.append(node(counter, parentNode.x, parentNode.y - 1, parentNode.g + 1, calculateH(parentNode.x, parentNode.y - 1), parentNode.number))
+		coordinates.append((parentNode.x, parentNode.y - 1, parentNode.g + 1 + calculateH(parentNode.x, parentNode.y - 1)))
 		counter += 1
-		print("adding " + str(parentNode.x) + ", " + str(parentNode.y - 1))
+		#print("adding " + str(nodes[len(nodes) - 1].x) + ", " + str(nodes[len(nodes) - 1].y) + " g: " + str(nodes[len(nodes) - 1].g) + " h: " + str(nodes[len(nodes) - 1].h) + " f: " + str(nodes[len(nodes) - 1].f))
 		nodes.sort(key = lambda x: x.f, reverse = True)
 		coordinates.sort(key = lambda x: x[2], reverse = True)
 
-	if  (parentNode.x + 1, parentNode.y - 1, calculateG(parentNode.x + 1, parentNode.y - 1) + calculateH(parentNode.x + 1, parentNode.y - 1)) not in coordinates and (parentNode.x + 1, parentNode.y - 1, calculateG(parentNode.x + 1, parentNode.y - 1) + calculateH(parentNode.x + 1, parentNode.y - 1)) not in explored and parentNode.x + 1 >= 0 and parentNode.x + 1 <= gridX and parentNode.y - 1 >= 0 and parentNode.y - 1 <= gridY:
-		nodes.append(node(counter, parentNode.x + 1, parentNode.y - 1, calculateG(parentNode.x + 1, parentNode.y - 1), calculateH(parentNode.x + 1, parentNode.y - 1), parentNode.number))
-		coordinates.append((parentNode.x + 1, parentNode.y - 1, calculateG(parentNode.x + 1, parentNode.y - 1) + calculateH(parentNode.x + 1, parentNode.y - 1)))
+	if  (parentNode.x + 1, parentNode.y - 1, parentNode.g + 1.4 + calculateH(parentNode.x + 1, parentNode.y - 1)) not in coordinates and (parentNode.x + 1, parentNode.y - 1) not in explored and (parentNode.x + 1, parentNode.y - 1) not in obstacles and parentNode.x + 1 > 0 and parentNode.x + 1 <= gridX and parentNode.y - 1 > 0 and parentNode.y - 1 <= gridY:
+		nodes.append(node(counter, parentNode.x + 1, parentNode.y - 1, parentNode.g + 1.4, calculateH(parentNode.x + 1, parentNode.y - 1), parentNode.number))
+		coordinates.append((parentNode.x + 1, parentNode.y - 1, 1.4 + calculateH(parentNode.x + 1, parentNode.y - 1)))
 		counter += 1
-		print("adding " + str(parentNode.x + 1) + ", " + str(parentNode.y - 1))
+		#print("adding " + str(nodes[len(nodes) - 1].x) + ", " + str(nodes[len(nodes) - 1].y) + " g: " + str(nodes[len(nodes) - 1].g) + " h: " + str(nodes[len(nodes) - 1].h) + " f: " + str(nodes[len(nodes) - 1].f))
 		nodes.sort(key = lambda x: x.f, reverse = True)
 		coordinates.sort(key = lambda x: x[2], reverse = True)
 
 while goal not in coordinates:
 	current = nodes[len(nodes) - 1]
 	currentCoordinate = coordinates[len(coordinates) - 1]
-	print("checking " + str(current.x) + ", "+ str(current.y))
-	exploredNodes.append(nodes[len(nodes) - 1])
+	#print("checking " + str(current.x) + ", "+ str(current.y) + " F: " + str(current.f))
+	print("checking: " + str(current.x) + ", " + str(current.y) + " number: " + str(current.number) + " parent: " + str(current.parent))
+	exploredNodes.append(current)
 	nodes.remove(nodes[len(nodes) - 1])
-	explored.append(coordinates[len(coordinates) - 1])
+	explored.append((current.x, current.y))
 	coordinates.remove(coordinates[len(coordinates) - 1])
-	if currentCoordinate == (goal.x, goal.y, currentCoordinate[2]):
+	if (current.x, current.y) == (goal.x, goal.y):
 		break
 	else:
 		checkNeighbors(current)
-
+'''
+print("explored")
 for x in exploredNodes:
 	print("number: " + str(x.number) + " " + str(x.x) + ", " + str(x.y) + " parent: " + str(x.parent))
+'''
+for x in path:
+	print(str(x.x) + ", " + str(x.y))
 
 for node in exploredNodes:
 	if node.x == goalX and node.y == goalY:
 		print("added goal to path") 
 		path.append(node)
+		break
 
 for x in path:
 	print(str(x.x) + ", " + str(x.y))
 
+print("creating path")
+
 while path[len(path) - 1].parent != 0:
 	curent = path[len(path) - 1]
-	#print("parent: " + str(current.parent))
 	for node in exploredNodes:
 		#print("number: " + str(node.number))
 		if node.number == current.parent:
 			path.append(node)
-			for x in path:
-				print(str(x.x) + ", " + str(x.y))
+			#print("Adding: " + str(node.x) + ", " + str(node.y))
+			print("adding to path " + str(node.x) + ", " + str(node.y) + " number: " + str(node.number) + " parent: " + str(node.parent))
 			current = node
 			break
 path.append(start)
